@@ -1,0 +1,27 @@
+FROM swift:5.9-jammy as base
+
+# Install OS updates
+RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true \
+    && apt-get -q update \
+    && apt-get -q dist-upgrade -y \
+    && apt-get install -y libjemalloc-dev
+
+RUN mkdir -p /home/vapor-service
+
+WORKDIR /home/vapor-service/
+
+FROM base as builder
+
+COPY ./basic-vapor .
+
+WORKDIR /home/vapor-service
+
+RUN swift build --build-tests
+
+RUN swift build -c release --static-swift-stdlib \
+    -Xlinker -u -Xlinker _swift_backtrace_isThunkFunction
+
+FROM base as image
+
+#COPY --from=builder /home/vapor/basic-vapor/.swiftpm ./.swiftpm
+COPY --from=builder /home/vapor-service/.build ./.build
