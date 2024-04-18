@@ -16,6 +16,8 @@ COPY ./basic-vapor .
 
 WORKDIR /home/vapor-service
 
+RUN swift build 
+
 RUN swift build --build-tests
 
 RUN swift build -c release --static-swift-stdlib \
